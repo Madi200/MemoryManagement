@@ -1,0 +1,95 @@
+package controller;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Queue;
+
+import model.HelperProcess;
+import data.ParseFile;
+
+
+public class TestMain {
+
+	public static void main(String[] args) throws IOException {
+		// TODO Auto-generated method stub
+		
+		String fileName = "F:\\Practice\\Assignment3\\input1.txt";
+		ArrayList<HelperProcess> processData;
+		
+		ParseFile dataObj = new ParseFile();
+		processData = dataObj.readFile(fileName);
+		
+		processData.sort(new StartTimeComparison());
+		
+		
+		/*for(int i=0; i<processData.size(); i++){
+			processData.get(i).printMetaData();
+			System.out.println("***************************");
+		}*/
+		
+		Queue<HelperProcess> processQueue = new LinkedList<HelperProcess>();
+		processQueue.addAll(processData);
+		
+		Iterator<HelperProcess> iterator = processQueue.iterator();
+		while(iterator.hasNext()){
+		  iterator.next().printMetaData();
+		  System.out.println("***************************");
+		}
+		
+
+		// 	Virtual Clock
+		for( int timer=0; timer <100000 ; timer++ ){
+			Queue<HelperProcess> inputQueue = new LinkedList<HelperProcess>();
+			Queue<HelperProcess> runningQueue = new LinkedList<HelperProcess>();
+			inputQueue = matchArrivalTime(processQueue, timer);
+			runningQueue = matchFinishTime(runningQueue, timer);
+						
+						//	 		(MemSize,policy)	
+			VSPTest vspObj = new VSPTest(20000, 1);
+			Iterator<HelperProcess> inputQIterator = processQueue.iterator();
+			while(inputQIterator.hasNext()){
+				HelperProcess currentProcess = inputQIterator.next();
+				if (vspObj.addProcessToMem(currentProcess) == true){
+					System.out.println("Process "+currentProcess.getPId()+" is Added to Memory");
+					runningQueue.add(currentProcess);
+					inputQueue.remove(currentProcess);					
+				}
+				
+			}
+
+		}
+		
+	}
+	
+	// Create input Queue & return all the process whom arrivalTime matched with virtual clock current time
+	public static Queue<HelperProcess> matchArrivalTime(Queue<HelperProcess> pQueue,int time){
+		Queue<HelperProcess> inputQueue = new LinkedList<HelperProcess>();
+		Iterator<HelperProcess> iterator = pQueue.iterator();
+		while( iterator.hasNext() ){
+		HelperProcess currentProcess = iterator.next(); 
+		  if ( currentProcess.getArrivalTime() == time ){
+			  inputQueue.add(currentProcess);
+			  pQueue.remove(currentProcess);
+		  }
+		}
+		
+		return inputQueue;
+	}
+
+	public static Queue<HelperProcess> matchFinishTime(Queue<HelperProcess> runningQueue,int time){
+		Queue<HelperProcess> removed = new LinkedList<HelperProcess>();
+		Iterator<HelperProcess> iterator = runningQueue.iterator();
+		while( iterator.hasNext() ){
+		HelperProcess currentProcess = iterator.next(); 
+		  if ( currentProcess.getLifeTime() == time ){
+			  System.out.println("Process "+currentProcess.getPId() +" completes");
+			  removed.add(currentProcess);
+			  runningQueue.remove(currentProcess);
+		  }
+		}
+		
+		return removed;
+	}
+}
